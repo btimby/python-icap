@@ -1,5 +1,6 @@
 """
-Helpers and factory functions for session management of REQMOD and RESPMOD requests.
+Helpers and factory functions for session management of REQMOD and RESPMOD
+requests.
 
 Sessions are particularly useful for bridging REQMOD and RESPMOD requests,
 something that the ICAP protocol does not provide by default.
@@ -8,7 +9,8 @@ A good ICAP client, e.g. Squid, will give request/response pairs an
 X-Session-ID header so that you can easily match them up. This relies on that
 behaviour.
 
-TODO: Generate an ID from uniquely identifying headers, e.g. cookies, request line.
+TODO: Generate an ID from uniquely identifying headers, e.g. cookies, request
+      line.
 TODO: Make the X-Session-ID configurable.
 
 """

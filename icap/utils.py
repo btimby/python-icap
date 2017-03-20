@@ -54,14 +54,16 @@ def convert_offsets_to_sizes(fields):
     return encapsulated_by_sizes
 
 
-b = lambda body: '(%s-body|null-body)' % body
+def b(body):
+    return '(%s-body|null-body)' % body
 
-#valid Encapsulated keys, according to RFC3507 section 4.4.1.
-#REQMOD  request  encapsulated_list: [reqhdr] reqbody
-#REQMOD  response encapsulatedlist: {[reqhdr] reqbody} | {[reshdr] resbody}
-#RESPMOD request  encapsulated_list: [reqhdr] [reshdr] resbody
-#RESPMOD response encapsulated_list: [reshdr] resbody
-#OPTIONS response encapsulated_list: optbody
+
+# Valid Encapsulated keys, according to RFC3507 section 4.4.1.
+# REQMOD  request  encapsulated_list: [reqhdr] reqbody
+# REQMOD  response encapsulatedlist: {[reqhdr] reqbody} | {[reshdr] resbody}
+# RESPMOD request  encapsulated_list: [reqhdr] [reshdr] resbody
+# RESPMOD response encapsulated_list: [reshdr] resbody
+# OPTIONS response encapsulated_list: optbody
 
 encapsulated_input_orders = {
     'REQMOD':  '^(req-hdr )?%s$' % b('req'),

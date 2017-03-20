@@ -10,9 +10,6 @@ from urllib.parse import urlencode, parse_qs, urlparse
 from werkzeug import cached_property, parse_options_header
 
 from .errors import (
-    InvalidEncapsulatedHeadersError,
-    MalformedRequestError,
-    abort,
     icap_response_codes,
     http_response_codes)
 
@@ -33,7 +30,8 @@ class RequestLine(namedtuple('RequestLine', 'method uri version')):
 
     >>> from icap import RequestLine
     >>> RequestLine('GET', '/', 'HTTP/1.1')._replace(method='POST')
-    RequestLine(method='POST', uri=ParseResult(scheme='', netloc='', path='/', params='', query={}, fragment=''), version='HTTP/1.1')
+    RequestLine(method='POST', uri=ParseResult(scheme='', netloc='', path='/',
+                params='', query={}, fragment=''), version='HTTP/1.1')
 
     But generally, try to restrict yourself to query parameter changes only,
     which don't involve this kludgery. It's generally poor form to change HTTP
@@ -134,11 +132,13 @@ class HeadersDict(OrderedDict):
         elif isinstance(value, str):
             return value
         else:
-            raise TypeError("Value must be of type 'str' or 'bytes', received '%s'" % type(value))
+            raise TypeError("Value must be of type 'str' or 'bytes', "
+                            "received '%s'" % type(value))
 
     def __getitem__(self, key):
         """Return the first value stored at ``key``."""
-        return OrderedDict.__getitem__(self, self._checktype(key).lower())[0][1]
+        return OrderedDict.__getitem__(self,
+                                       self._checktype(key).lower())[0][1]
 
     def __contains__(self, key):
         """Check if header ``key`` is present. Case insensitive."""
@@ -235,7 +235,8 @@ class ICAPMessage(object):
     @cached_property
     def has_body(self):
         """Return True if this object has a payload."""
-        if self.is_request and self.is_options and 'encapsulated' not in self.headers:
+        if ((self.is_request and self.is_options and
+             'encapsulated' not in self.headers)):
             return False
         return 'null-body' not in self.headers['encapsulated']
 
@@ -251,7 +252,8 @@ class ICAPRequest(ICAPMessage):
 
         """
         super().__init__(*args, **kwargs)
-        self.request_line = request_line or RequestLine("UNKNOWN", "/", "ICAP/1.0")
+        self.request_line = request_line or RequestLine("UNKNOWN", "/",
+                                                        "ICAP/1.0")
 
     @classmethod
     def from_parser(cls, parser):
@@ -280,7 +282,8 @@ class ICAPRequest(ICAPMessage):
     def allow_204(self):
         """Return True of the client supports a 204 response code."""
         # FIXME: this should parse the list.
-        return ('204' in self.headers.get('allow', '') or 'preview' in self.headers)
+        return ('204' in self.headers.get('allow', '') or
+                'preview' in self.headers)
 
     @cached_property
     def is_reqmod(self):
@@ -312,7 +315,10 @@ class ICAPResponse(ICAPMessage):
         self.status_line = status_line or StatusLine('ICAP/1.0', 200, 'OK')
 
     def __bytes__(self):
-        return b'\r\n'.join([' '.join(map(str, self.status_line)).encode('utf8'), bytes(self.headers)])
+        return b'\r\n'.join((
+            ' '.join(map(str, self.status_line)).encode('utf8'),
+            bytes(self.headers)
+        ))
 
     @classmethod
     def from_error(cls, error):
@@ -396,11 +402,13 @@ class HTTPMessage(object):
             # protect people from idiots that set the charset on things they
             # never, ever should. Take, for example, Yammer, who set the
             # charset on images and video.
-            if charset and content_type.startswith(('application', 'text', 'message')):
+            if charset and content_type.startswith(('application', 'text',
+                                                    'message')):
                 value = value.encode(charset)
 
         if not isinstance(value, bytes):
-            raise TypeError("Could not figure out body encoding. Encode payload appropriately.")
+            raise TypeError('Could not figure out body encoding. Encode '
+                            'payload appropriately.')
 
         self._body = value
 

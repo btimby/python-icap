@@ -1,5 +1,4 @@
 import asyncio
-import functools
 import logging
 import re
 
@@ -9,7 +8,7 @@ except ImportError:
     from asyncio import iscoroutine
 from io import BytesIO, SEEK_END
 
-from .criteria import AlwaysCriteria, get_handler
+from .criteria import get_handler
 from .errors import abort, ICAPAbort, MalformedRequestError
 from .models import ICAPResponse, HTTPMessage
 from .parsing import ICAPRequestParser
@@ -47,7 +46,8 @@ class ICAPProtocol(asyncio.Protocol):
 
         p = self.parser
 
-        if p.headers_complete() and p.is_options and 'encapsulated' not in p.headers:
+        if ((p.headers_complete() and p.is_options and
+             'encapsulated' not in p.headers)):
             p.complete(True)
 
         if p.complete():
@@ -100,7 +100,8 @@ class ICAPProtocol(asyncio.Protocol):
 
         This is also the principal exception handler.
         """
-        parser, self.parser, self._buffer = self.parser, ICAPRequestParser(), BytesIO()
+        parser, self.parser, self._buffer = \
+            self.parser, ICAPRequestParser(), BytesIO()
 
         request = parser.to_icap()
 
@@ -113,13 +114,16 @@ class ICAPProtocol(asyncio.Protocol):
 
             if not request.is_options:
                 hooks['before_handling'](request)
-                request.session = yield from maybe_coroutine(get_session, request)
+                request.session = yield from maybe_coroutine(get_session,
+                                                             request)
 
             try:
-                response = yield from self.dispatch_request(request, handler, raw)
+                response = yield from self.dispatch_request(request, handler,
+                                                            raw)
             finally:
                 if should_finalize_session(request):
-                    yield from maybe_coroutine(finalize_session, request.session['id'])
+                    yield from maybe_coroutine(finalize_session,
+                                               request.session['id'])
 
             hooks['before_serialization'](request, response)
         except ICAPAbort as e:
@@ -167,8 +171,10 @@ class ICAPProtocol(asyncio.Protocol):
         url = request.request_line.uri
         resource = url.path.lower()
 
-        invalid_reqmod = (request.is_reqmod and not re.match('/reqmod/?$', resource))
-        invalid_respmod = (request.is_respmod and not re.match('/respmod/?$', resource))
+        invalid_reqmod = (request.is_reqmod and
+                          not re.match('/reqmod/?$', resource))
+        invalid_respmod = (request.is_respmod and
+                           not re.match('/respmod/?$', resource))
 
         if not request.is_options and (invalid_reqmod or invalid_respmod):
             abort(405)
@@ -235,7 +241,8 @@ class ICAPProtocol(asyncio.Protocol):
 
         response = ICAPResponse()
 
-        response.headers['Methods'] = 'RESPMOD' if path.endswith('respmod') else 'REQMOD'
+        response.headers['Methods'] = \
+            'RESPMOD' if path.endswith('respmod') else 'REQMOD'
         response.headers['Allow'] = '204'
 
         extra_headers = hooks['options_headers']()

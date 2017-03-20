@@ -37,15 +37,14 @@ class Hooks(dict):
 
         """
 
+        func, default = None, None
         if name in self:
             func, default = dict.__getitem__(self, name)
-        else:
-            func = lambda *args: None
-            default = None
 
         def safe_callable(*args, **kwargs):
             try:
-                return func(*args, **kwargs)
+                if func:
+                    return func(*args, **kwargs)
             except Exception as e:
                 log.error("Error calling hook '%s'", name, exc_info=True)
                 return default

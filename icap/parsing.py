@@ -20,6 +20,7 @@ __all__ = [
 # who could resist a class name like this?
 BodyPart = namedtuple('BodyPart', 'content header')
 
+
 class ParseState(object):
     empty = 1
     started = 2
@@ -311,7 +312,8 @@ class HTTPMessageParser(ChunkedMessageParser):
                 if len(data) != size+2:
                     raise ChunkParsingError
 
-                # reset the stream so we don't create the same chunk over and over
+                # reset the stream so we don't create the same chunk over and
+                # over
                 self.body = BytesIO(self.body.read())
 
                 # FIXME: non-crlf-endings

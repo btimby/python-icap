@@ -55,7 +55,8 @@ class AnyOfCriteria(BaseCriteria):
         return any(c(request) for c in self.criteria)
 
     def __str__(self):
-        return '<%s (%s)>' % (self.__class__.__name__, ', '.join(map(str, self.criteria)))
+        return '<%s (%s)>' % \
+            (self.__class__.__name__, ', '.join(map(str, self.criteria)))
 
 
 class AllOfCriteria(BaseCriteria):
@@ -69,7 +70,8 @@ class AllOfCriteria(BaseCriteria):
         return all(c(request) for c in self.criteria)
 
     def __str__(self):
-        return '<%s (%s)>' % (self.__class__.__name__, ', '.join(map(str, self.criteria)))
+        return '<%s (%s)>' % \
+            (self.__class__.__name__, ', '.join(map(str, self.criteria)))
 
 
 class RegexCriteria(BaseCriteria):
@@ -133,7 +135,8 @@ class ContentTypeCriteria(BaseCriteria):
         return content_type in self.content_types
 
     def __str__(self):
-        return '<%s (%r)>' % (self.__class__.__name__, ', '.join(self.content_types))
+        return '<%s (%r)>' % \
+            (self.__class__.__name__, ', '.join(self.content_types))
 
 
 class MethodCriteria(BaseCriteria):
@@ -159,7 +162,8 @@ class HTTPResponseCriteria(BaseCriteria):
 
 
 class StatusCodeCriteria(HTTPResponseCriteria):
-    """Criteria that matches on the status code of the encapsulated HTTP response.
+    """Criteria that matches on the status code of the encapsulated HTTP
+    response.
 
     Never matches on HTTP requests.
 

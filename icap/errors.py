@@ -65,8 +65,8 @@ def abort(code):
 class ICAPAbort(Exception):
     """Used to quick abort a session with a given response code.
 
-    When handled in :class:`icap.server.Server`, exceptions of this nature will be sent
-    back to the client with the ICAP status code that was raised.
+    When handled in :class:`icap.server.Server`, exceptions of this nature will
+    be sent back to the client with the ICAP status code that was raised.
 
     This exception should not be used directly. :func:`abort` should be used
     instead.

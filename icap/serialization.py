@@ -81,9 +81,11 @@ class Serializer(object):
         self.is_options = is_options
 
     def serialize_to_stream(self, stream):
-        """Serialize the ICAP response and contained HTTP message to *stream*."""
+        """Serialize the ICAP response and contained HTTP message to
+        *stream*."""
         self.set_required_headers()
-        remove_invalid_headers(self.response.headers, is_options=self.is_options)
+        remove_invalid_headers(self.response.headers,
+                               is_options=self.is_options)
 
         http_preamble = self.set_encapsulated_header()
 
@@ -149,7 +151,8 @@ class Serializer(object):
 
             encapsulated[body_key] = len(http_preamble)
 
-        self.response.headers['Encapsulated'] = dump_encapsulated_field(encapsulated)
+        self.response.headers['Encapsulated'] = dump_encapsulated_field(
+            encapsulated)
 
         return http_preamble
 

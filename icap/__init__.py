@@ -1,3 +1,5 @@
+# flake8: noqa
+
 from .asyncio import ICAPProtocol, ICAPProtocolFactory
 from .criteria import *
 from .errors import abort
