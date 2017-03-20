@@ -15,7 +15,7 @@ from icap.models import ICAPRequest
 
 
 def data_string(path):
-    return open('data/' + path, 'rb').read()
+    return open('tests/data/' + path, 'rb').read()
 
 
 class BytesIOTransport:

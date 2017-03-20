@@ -1,0 +1,9 @@
+POST /modified-path HTTP/1.1
+Host: www.origin-server.com
+Via: 1.0 icap-server.net (ICAP Example ReqMod Service 1.1)
+Content-Type: application/x-www-form-urlencoded
+
+28
+field1=value1&field2=value2
+0
+

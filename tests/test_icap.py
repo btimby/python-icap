@@ -7,7 +7,7 @@ from icap.errors import MalformedRequestError, InvalidEncapsulatedHeadersError, 
 
 
 def data_string(path):
-    return open('data/' + path, 'rb').read()
+    return open('tests/data/' + path, 'rb').read()
 
 
 def assert_bodies_match(
@@ -270,7 +270,7 @@ def test_malformed_request_line(input_bytes):
 
 
 def test_post_data_parsing_and_serialization():
-    with open('data/http_request_with_post_data.request', 'rb') as f:
+    with open('tests/data/http_request_with_post_data.request', 'rb') as f:
         data = f.read()
 
     request = HTTPMessageParser.from_bytes(data)

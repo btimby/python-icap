@@ -20,7 +20,7 @@ logging.basicConfig(stream=sys.stderr)
 def start_client(pid):
     time.sleep(0.1)
 
-    with open('data/icap_request_with_two_header_sets.request', 'rb') as f:
+    with open('tests/data/icap_request_with_two_header_sets.request', 'rb') as f:
         sent = f.read()
 
     sent = sent.replace(b'\r\nEncapsulated', b'\r\nX-Session-ID: foo\r\nEncapsulated')

@@ -21,21 +21,21 @@ def benchmark(count, maximum_time, *args, **kwargs):
     return inner
 
 
-@benchmark(2200, 0.0005, request=open('data/request_with_http_response_and_payload.request', 'rb').read())
+@benchmark(2200, 0.0005, request=open('tests/data/request_with_http_response_and_payload.request', 'rb').read())
 def benchmark_ICAP_parsing(request):
     ICAPRequestParser.from_bytes(request)
 
 
-@benchmark(800, 0.0006, request=open('data/reddit.com.request', 'rb').read())
+@benchmark(800, 0.0006, request=open('tests/data/reddit.com.request', 'rb').read())
 def benchmark_ICAP_parsing(request):
     ICAPRequestParser.from_bytes(request)
 
 
-@benchmark(6000, 0.0002, request=open('data/http_request_with_payload.request', 'rb').read())
+@benchmark(6000, 0.0002, request=open('tests/data/http_request_with_payload.request', 'rb').read())
 def benchmark_HTTP_parsing(request):
     HTTPMessageParser.from_bytes(request)
 
 
-@benchmark(1800, 0.0007, request=open('data/ninemsn.com.au', 'rb').read())
+@benchmark(1800, 0.0007, request=open('tests/data/ninemsn.com.au', 'rb').read())
 def benchmark_HTTP_parsing(request):
     HTTPMessageParser.from_bytes(request)

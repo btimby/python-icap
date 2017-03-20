@@ -1,27 +1,18 @@
-PYTHON:=/usr/bin/python3
-PYTEST:=`which py.test`
-COVERAGE_RUN:=`which coverage3` run --append
 
-run-tests: clean-coverage unit-tests service-tests coverage
+venv/bin/python3: requirements.txt
+	python3 -m virtualenv venv -p python3
+	venv/bin/pip install -r requirements.txt
 
-coverage:
-	coverage html --include="icap/*"
-	coverage report --include="icap/*"
+venv: venv/bin/python3
 
-clean-coverage:
-	rm -rf .coverage htmlcov
+test: venv
+	venv/bin/coverage3 run venv/bin/py.test tests/test_*.py
 
-unit-tests-fastfail:
-	$(PYTHON) $(COVERAGE_RUN) $(PYTEST) tests/test_*.py -x
+lint: venv
+	venv/bin/flake8 icap
 
-unit-tests:
-	$(PYTHON) $(COVERAGE_RUN) $(PYTEST) tests/test_*.py
-
-service-tests:
-	$(PYTHON) tests/servicetest*.py
-
-benchmarks:
-	$(PYTHON) tests/benchmarks.py
+clean:
+	rm -rf venv .coverage
 
 doc:
 	make -C docs html

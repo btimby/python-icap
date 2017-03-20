@@ -99,11 +99,13 @@ class ChunkedMessageParser(object):
             if not self.feed_line(line):
                 raise MalformedRequestError('Line not valid: %r' % line)
 
-        s = stream.read()
-        if s:
-            self.feed_body(s)
-        else:
-            self.complete(True)
+        while True:
+            s = stream.read()
+            if s:
+                self.feed_body(s)
+            else:
+                self.complete(True)
+                break
 
         assert self.complete()
         return self
