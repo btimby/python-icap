@@ -354,7 +354,7 @@ class HTTPMessage(object):
         """
         self.headers = headers or HeadersDict()
         self.body = body
-        self.cookies = SimpleCookie(self.headers.get('Cookie', ''))
+        self.cookies = SimpleCookie(self.headers.pop('Cookie', ''))
         self.set_cookies = SimpleCookie()
 
     def set_cookie(self, name, value, path=None, domain=None):
@@ -471,7 +471,17 @@ class HTTPMessage(object):
         higher-level constructs back to bytes.
 
         """
-        pass
+        # If the cookies collection was modified, we want the Cookie header to
+        # reflect those changes. Reconstitute the header from the collection.
+        value = str(self.cookies).partition(': ')[2]
+        # It's possible there are no cookies, in which case we don't want to
+        # add the header.
+        if value:
+            self.headers['Cookie'] = value
+        # Ask the browser to save new cookies (or maybe delete some cookies).
+        for morsel in self.set_cookies.values():
+            name, _, value = str(morsel).partition(': ')
+            self.headers[name] = value
 
 
 class HTTPRequest(HTTPMessage):
@@ -545,14 +555,6 @@ class HTTPResponse(HTTPMessage):
         # defaults to protect against AttributeErrors.
         self.request_line = RequestLine('GET', '/', 'HTTP/1.1')
         self.request_headers = HeadersDict()
-
-    def pre_serialization(self):
-        """Handle cookies.
-
-        """
-        for morsel in self.set_cookies.values():
-            name, _, value = str(morsel).partition(': ')
-            self.headers[name] = value
 
     @classmethod
     def from_parser(cls, parser):

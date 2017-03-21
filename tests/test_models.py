@@ -96,6 +96,16 @@ class TestHTTPMessage(object):
         assert 'Set-Cookie' in m.headers
         assert 'expires' in m.headers['Set-Cookie']
 
+    def test_cookies_hide(self):
+        m = HTTPResponse(headers={'Cookie': 'foo=bar; bar=baz'})
+        assert 'foo' in m.cookies
+
+        # Removing a cookie from the collection hides it from the origin server
+        # but leaves it defined on the browser.
+        m.cookies.pop('foo')
+        m.pre_serialization()
+        assert 'foo' not in m.headers['Cookie']
+
 
 class TestICAPMessage(object):
     def test_is_response_and_is_response(self):
