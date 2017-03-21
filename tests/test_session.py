@@ -13,6 +13,8 @@ def test_make_session_id():
         mock_uuid.return_value.hex = 'cool hash'
         assert make_session_id(req) == 'cool hash'
 
+    # Delete the value that was auto-added.
+    del req.headers['X-Session-ID']
     req.headers['X-Session-ID'] = 'cool session id'
 
     assert make_session_id(req) == 'cool session id'

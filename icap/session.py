@@ -72,7 +72,6 @@ def make_session_id(request):
     if 'X-Session-ID' in request.headers:
         session_id = request.headers['X-Session-ID']
     else:
-        log.warning("X-Session-ID header not available, using UUID")
         # FIXME: generate id from headers
         session_id = request.headers['X-Session-ID'] = uuid.uuid4().hex
     return session_id

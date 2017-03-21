@@ -138,7 +138,7 @@ class ICAPProtocol(asyncio.Protocol):
                       request.request_line.method, exc_info=True)
             response = ICAPResponse.from_error(500)
 
-        if not request.is_options:
+        if not request.is_options and hasattr(request, 'session'):
             try:
                 response.headers['X-Session-ID'] = request.session['id']
             except KeyError as e:

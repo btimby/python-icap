@@ -65,6 +65,20 @@ class TestHTTPMessage(object):
         else:
             assert False, "Content-Type with no charset should raise TypeError"
 
+    def test_cookies_parse(self):
+        m = HTTPMessage(headers={'Cookie': 'foo=bar'})
+
+        assert len(m.cookies) == 1
+        assert m.cookies['foo'].value == 'bar'
+
+    def test_cookies_set(self):
+        m = HTTPResponse()
+        m.set_cookie('foo', 'bar')
+
+        m.pre_serialization()
+
+        assert 'Set-Cookie' in m.headers
+
 
 class TestICAPMessage(object):
     def test_is_response_and_is_response(self):

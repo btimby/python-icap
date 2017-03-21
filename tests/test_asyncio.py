@@ -149,7 +149,8 @@ class TestICAPProtocol:
     def test_multiple_data_received_calls(self):
         expected = HeadersDict([
             ('Host', 'icap.example.org'),
-            ('Encapsulated', 'req-hdr=0, res-hdr=137, res-body=296')
+            ('Encapsulated', 'req-hdr=0, res-hdr=137, res-body=296'),
+            ('X-Session-ID', 'cool hash')
         ])
 
         input_bytes = data_string('icap_request_with_two_header_sets.request')
@@ -170,11 +171,14 @@ class TestICAPProtocol:
             assert len(request.http.body) == 51
             called = True
 
-        for b in input_bytes:
-            f = protocol.data_received(bytes([b]))
+        with patch('icap.session.uuid.uuid4') as mock_uuid:
+            mock_uuid.return_value.hex = 'cool hash'
 
-            if f is not None:
-                asyncio.get_event_loop().run_until_complete(f)
+            for b in input_bytes:
+                f = protocol.data_received(bytes([b]))
+
+                if f is not None:
+                    asyncio.get_event_loop().run_until_complete(f)
 
         t = protocol.transport.getvalue()
 

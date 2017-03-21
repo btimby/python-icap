@@ -6,6 +6,7 @@ comprising them.
 
 from collections import namedtuple, OrderedDict
 from urllib.parse import urlencode, parse_qs, urlparse
+from http.cookies import SimpleCookie
 
 from werkzeug import cached_property, parse_options_header
 
@@ -134,6 +135,9 @@ class HeadersDict(OrderedDict):
         else:
             raise TypeError("Value must be of type 'str' or 'bytes', "
                             "received '%s'" % type(value))
+
+    def __delitem__(self, key):
+        OrderedDict.__delitem__(self, key.lower())
 
     def __getitem__(self, key):
         """Return the first value stored at ``key``."""
@@ -349,6 +353,12 @@ class HTTPMessage(object):
         """
         self.headers = headers or HeadersDict()
         self.body = body
+        self.cookies = SimpleCookie(self.headers.get('Cookie', ''))
+        self.set_cookies = SimpleCookie()
+
+    def set_cookie(self, name, value):
+        self.cookies[name] = value
+        self.set_cookies[name] = value
 
     @property
     def body(self):
@@ -524,6 +534,14 @@ class HTTPResponse(HTTPMessage):
         # defaults to protect against AttributeErrors.
         self.request_line = RequestLine('GET', '/', 'HTTP/1.1')
         self.request_headers = HeadersDict()
+
+    def pre_serialization(self):
+        """Handle cookies.
+
+        """
+        for morsel in self.set_cookies.values():
+            name, _, value = str(morsel).partition(': ')
+            self.headers[name] = value
 
     @classmethod
     def from_parser(cls, parser):
