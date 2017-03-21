@@ -75,9 +75,26 @@ class TestHTTPMessage(object):
         m = HTTPResponse()
         m.set_cookie('foo', 'bar')
 
+        # Cookie should be immediately available in collection.
+        assert 'foo' in m.cookies
+
+        # New cookies will be present in a Set-Cookie header. That header is
+        # generated just before serialization.
         m.pre_serialization()
 
         assert 'Set-Cookie' in m.headers
+
+    def test_cookies_del(self):
+        m = HTTPResponse()
+        m.set_cookie('foo', 'bar')
+        m.del_cookie('foo')
+
+        assert 'foo' not in m.cookies
+
+        m.pre_serialization()
+
+        assert 'Set-Cookie' in m.headers
+        assert 'expires' in m.headers['Set-Cookie']
 
 
 class TestICAPMessage(object):

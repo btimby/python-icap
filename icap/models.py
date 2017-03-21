@@ -7,6 +7,7 @@ comprising them.
 from collections import namedtuple, OrderedDict
 from urllib.parse import urlencode, parse_qs, urlparse
 from http.cookies import SimpleCookie
+from datetime import datetime, timedelta
 
 from werkzeug import cached_property, parse_options_header
 
@@ -356,9 +357,19 @@ class HTTPMessage(object):
         self.cookies = SimpleCookie(self.headers.get('Cookie', ''))
         self.set_cookies = SimpleCookie()
 
-    def set_cookie(self, name, value):
+    def set_cookie(self, name, value, path=None, domain=None):
         self.cookies[name] = value
         self.set_cookies[name] = value
+        if path:
+            self.set_cookies[name]['path'] = path
+        if domain:
+            self.set_cookies[name]['domain'] = domain
+
+    def del_cookie(self, name):
+        del self.cookies[name]
+        self.set_cookies[name] = ''
+        self.set_cookies[name]['expires'] = (datetime.now() -
+            timedelta(days=1)).strftime('%a, %d %b %Y %I:%m:%S GMT')
 
     @property
     def body(self):
