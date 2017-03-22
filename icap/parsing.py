@@ -291,12 +291,12 @@ class HTTPMessageParser(ChunkedMessageParser):
         return 'gzip' in self.headers.get('Content-Encoding', '')
 
     def on_headers_complete(self):
+        super().on_headers_complete()
         # Parse cookies if any.
         self.cookies = SimpleCookie(self.headers.pop('Cookie', ''))
         for set_cookie in self.headers.getlist('Set-Cookie'):
-            set_cookie = SimpleCookie(set_cookie)
-            self.set_cookies[set_cookie.name] = set_cookie
-        super().on_headers_complete()
+            name, value = list(SimpleCookie(set_cookie).items())[0]
+            self.set_cookies[name] = value
 
     def on_complete(self):
         payload = b''.join(b.content for b in self.chunks)

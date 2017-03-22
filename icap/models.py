@@ -446,7 +446,8 @@ class HTTPMessage(object):
         headers = self.headers.copy()
         # If the cookies collection was modified, we want the Cookie header to
         # reflect those changes. Reconstitute the header from the collection.
-        value = str(self.cookies).partition(': ')[2]
+        value = '; '.join([m.output().partition(': ')[2]
+                           for m in self.cookies.values()])
         # It's possible there are no cookies, in which case we don't want to
         # add the header.
         if value:
