@@ -8,6 +8,7 @@ from collections import namedtuple, OrderedDict
 from urllib.parse import urlencode, parse_qs, urlparse
 from http.cookies import SimpleCookie
 from datetime import datetime, timedelta
+from itertools import chain
 
 from werkzeug import cached_property, parse_options_header
 
@@ -197,6 +198,10 @@ class HeadersDict(OrderedDict):
 
         return s
 
+    def copy(self):
+        return HeadersDict(chain([i[0] for i in
+                           OrderedDict.values(self)]))
+
 
 class ICAPMessage(object):
     """Base ICAP class for generalising certain properties of both requests and
@@ -345,7 +350,7 @@ class HTTPMessage(object):
 
     """
 
-    def __init__(self, headers=None, body=b''):
+    def __init__(self, headers=None, cookies=None, set_cookies=None, body=b''):
         """If ``headers`` is not given, default to an empty instance of
         `~icap.models.HeadersDict`.
 
@@ -354,11 +359,10 @@ class HTTPMessage(object):
         """
         self.headers = headers or HeadersDict()
         self.body = body
-        self.cookies = SimpleCookie(self.headers.pop('Cookie', ''))
-        self.set_cookies = SimpleCookie()
+        self.cookies = cookies if cookies else SimpleCookie()
+        self.set_cookies = set_cookies if set_cookies else SimpleCookie()
 
     def set_cookie(self, name, value, path=None, domain=None):
-        self.cookies[name] = value
         self.set_cookies[name] = value
         if path:
             self.set_cookies[name]['path'] = path
@@ -366,7 +370,7 @@ class HTTPMessage(object):
             self.set_cookies[name]['domain'] = domain
 
     def del_cookie(self, name):
-        del self.cookies[name]
+        self.cookies.pop(name, None)
         self.set_cookies[name] = ''
         self.set_cookies[name]['expires'] = (datetime.now() -
             timedelta(days=1)).strftime('%a, %d %b %Y %I:%m:%S GMT')
@@ -439,7 +443,20 @@ class HTTPMessage(object):
         else:
             field = self.status_line
 
-        return b'\r\n'.join([bytes(field), bytes(self.headers)])
+        headers = self.headers.copy()
+        # If the cookies collection was modified, we want the Cookie header to
+        # reflect those changes. Reconstitute the header from the collection.
+        value = str(self.cookies).partition(': ')[2]
+        # It's possible there are no cookies, in which case we don't want to
+        # add the header.
+        if value:
+            headers['Cookie'] = value
+        # Ask the browser to save new cookies (or maybe delete some cookies).
+        for morsel in self.set_cookies.values():
+            name, _, value = str(morsel).partition(': ')
+            headers[name] = value
+
+        return b'\r\n'.join([bytes(field), bytes(headers)])
 
     @cached_property
     def is_request(self):
@@ -471,17 +488,7 @@ class HTTPMessage(object):
         higher-level constructs back to bytes.
 
         """
-        # If the cookies collection was modified, we want the Cookie header to
-        # reflect those changes. Reconstitute the header from the collection.
-        value = str(self.cookies).partition(': ')[2]
-        # It's possible there are no cookies, in which case we don't want to
-        # add the header.
-        if value:
-            self.headers['Cookie'] = value
-        # Ask the browser to save new cookies (or maybe delete some cookies).
-        for morsel in self.set_cookies.values():
-            name, _, value = str(morsel).partition(': ')
-            self.headers[name] = value
+        pass
 
 
 class HTTPRequest(HTTPMessage):
@@ -508,7 +515,8 @@ class HTTPRequest(HTTPMessage):
         """
         assert not isinstance(parser, ICAPRequestParser)
         assert parser.is_request
-        f = cls(parser.sline, parser.headers, parser.payload)
+        f = cls(parser.sline, parser.headers, parser.cookies,
+                parser.set_cookies, parser.payload)
 
         return f
 
@@ -565,4 +573,5 @@ class HTTPResponse(HTTPMessage):
         """
         assert not isinstance(parser, ICAPRequestParser)
         assert parser.is_response
-        return cls(parser.sline, parser.headers, parser.payload)
+        return cls(parser.sline, parser.headers, parser.cookies,
+                   parser.set_cookies, parser.payload)

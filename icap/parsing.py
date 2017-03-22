@@ -2,6 +2,7 @@ import gzip
 
 from collections import namedtuple
 from io import BytesIO, SEEK_END
+from http.cookies import SimpleCookie
 
 from werkzeug import cached_property
 
@@ -272,6 +273,11 @@ class ICAPRequestParser(ChunkedMessageParser):
 class HTTPMessageParser(ChunkedMessageParser):
     payload = b''
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cookies = SimpleCookie()
+        self.set_cookies = SimpleCookie()
+
     def attempt_body_parse(self):
         while True:
             chunk = self.attempt_parse_chunk()
@@ -283,6 +289,14 @@ class HTTPMessageParser(ChunkedMessageParser):
     @cached_property
     def is_gzipped(self):
         return 'gzip' in self.headers.get('Content-Encoding', '')
+
+    def on_headers_complete(self):
+        # Parse cookies if any.
+        self.cookies = SimpleCookie(self.headers.pop('Cookie', ''))
+        for set_cookie in self.headers.getlist('Set-Cookie'):
+            set_cookie = SimpleCookie(set_cookie)
+            self.set_cookies[set_cookie.name] = set_cookie
+        super().on_headers_complete()
 
     def on_complete(self):
         payload = b''.join(b.content for b in self.chunks)

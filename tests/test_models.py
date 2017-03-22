@@ -1,5 +1,7 @@
 import pytest
 
+from http.cookies import SimpleCookie
+
 from icap import ICAPRequest, ICAPResponse, RequestLine, HeadersDict, HTTPRequest, HTTPResponse, StatusLine
 from icap.errors import ICAPAbort
 from icap.models import ICAPMessage, HTTPMessage
@@ -65,46 +67,26 @@ class TestHTTPMessage(object):
         else:
             assert False, "Content-Type with no charset should raise TypeError"
 
-    def test_cookies_parse(self):
-        m = HTTPMessage(headers={'Cookie': 'foo=bar'})
-
-        assert len(m.cookies) == 1
-        assert m.cookies['foo'].value == 'bar'
-
     def test_cookies_set(self):
         m = HTTPResponse()
         m.set_cookie('foo', 'bar')
 
-        # Cookie should be immediately available in collection.
-        assert 'foo' in m.cookies
-
-        # New cookies will be present in a Set-Cookie header. That header is
-        # generated just before serialization.
-        m.pre_serialization()
-
-        assert 'Set-Cookie' in m.headers
+        assert b'Set-Cookie' in bytes(m)
 
     def test_cookies_del(self):
         m = HTTPResponse()
         m.set_cookie('foo', 'bar')
         m.del_cookie('foo')
 
-        assert 'foo' not in m.cookies
-
-        m.pre_serialization()
-
-        assert 'Set-Cookie' in m.headers
-        assert 'expires' in m.headers['Set-Cookie']
+        assert b'Set-Cookie: foo=""; expires=' in bytes(m)
 
     def test_cookies_hide(self):
-        m = HTTPResponse(headers={'Cookie': 'foo=bar; bar=baz'})
-        assert 'foo' in m.cookies
+        m = HTTPResponse(cookies=SimpleCookie('foo=bar; bar=baz'))
 
         # Removing a cookie from the collection hides it from the origin server
         # but leaves it defined on the browser.
         m.cookies.pop('foo')
-        m.pre_serialization()
-        assert 'foo' not in m.headers['Cookie']
+        assert b'Cookie foo=' not in bytes(m)
 
 
 class TestICAPMessage(object):
