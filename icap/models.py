@@ -6,7 +6,6 @@ comprising them.
 
 from collections import namedtuple, OrderedDict
 from urllib.parse import urlencode, parse_qs, urlparse
-from http.cookies import SimpleCookie
 from datetime import datetime, timedelta
 from itertools import chain
 
@@ -350,7 +349,7 @@ class HTTPMessage(object):
 
     """
 
-    def __init__(self, headers=None, cookies=None, set_cookies=None, body=b''):
+    def __init__(self, headers=None, body=b''):
         """If ``headers`` is not given, default to an empty instance of
         `~icap.models.HeadersDict`.
 
@@ -359,21 +358,6 @@ class HTTPMessage(object):
         """
         self.headers = headers or HeadersDict()
         self.body = body
-        self.cookies = cookies if cookies else SimpleCookie()
-        self.set_cookies = set_cookies if set_cookies else SimpleCookie()
-
-    def set_cookie(self, name, value, path=None, domain=None):
-        self.set_cookies[name] = value
-        if path:
-            self.set_cookies[name]['path'] = path
-        if domain:
-            self.set_cookies[name]['domain'] = domain
-
-    def del_cookie(self, name):
-        self.cookies.pop(name, None)
-        self.set_cookies[name] = ''
-        self.set_cookies[name]['expires'] = (datetime.now() -
-            timedelta(days=1)).strftime('%a, %d %b %Y %I:%m:%S GMT')
 
     @property
     def body(self):
@@ -443,21 +427,7 @@ class HTTPMessage(object):
         else:
             field = self.status_line
 
-        headers = self.headers.copy()
-        # If the cookies collection was modified, we want the Cookie header to
-        # reflect those changes. Reconstitute the header from the collection.
-        value = '; '.join([m.output().partition(': ')[2]
-                           for m in self.cookies.values()])
-        # It's possible there are no cookies, in which case we don't want to
-        # add the header.
-        if value:
-            headers['Cookie'] = value
-        # Ask the browser to save new cookies (or maybe delete some cookies).
-        for morsel in self.set_cookies.values():
-            name, _, value = str(morsel).partition(': ')
-            headers[name] = value
-
-        return b'\r\n'.join([bytes(field), bytes(headers)])
+        return b'\r\n'.join([bytes(field), bytes(self.headers)])
 
     @cached_property
     def is_request(self):
@@ -516,8 +486,7 @@ class HTTPRequest(HTTPMessage):
         """
         assert not isinstance(parser, ICAPRequestParser)
         assert parser.is_request
-        f = cls(parser.sline, parser.headers, parser.cookies,
-                parser.set_cookies, parser.payload)
+        f = cls(parser.sline, parser.headers, parser.payload)
 
         return f
 
@@ -574,5 +543,4 @@ class HTTPResponse(HTTPMessage):
         """
         assert not isinstance(parser, ICAPRequestParser)
         assert parser.is_response
-        return cls(parser.sline, parser.headers, parser.cookies,
-                   parser.set_cookies, parser.payload)
+        return cls(parser.sline, parser.headers, parser.payload)

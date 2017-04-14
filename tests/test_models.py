@@ -1,7 +1,5 @@
 import pytest
 
-from http.cookies import SimpleCookie
-
 from icap import ICAPRequest, ICAPResponse, RequestLine, HeadersDict, HTTPRequest, HTTPResponse, StatusLine
 from icap.errors import ICAPAbort
 from icap.models import ICAPMessage, HTTPMessage
@@ -66,27 +64,6 @@ class TestHTTPMessage(object):
             pass
         else:
             assert False, "Content-Type with no charset should raise TypeError"
-
-    def test_cookies_set(self):
-        m = HTTPResponse()
-        m.set_cookie('foo', 'bar')
-
-        assert b'Set-Cookie' in bytes(m)
-
-    def test_cookies_del(self):
-        m = HTTPResponse()
-        m.set_cookie('foo', 'bar')
-        m.del_cookie('foo')
-
-        assert b'Set-Cookie: foo=""; expires=' in bytes(m)
-
-    def test_cookies_hide(self):
-        m = HTTPResponse(cookies=SimpleCookie('foo=bar; bar=baz'))
-
-        # Removing a cookie from the collection hides it from the origin server
-        # but leaves it defined on the browser.
-        m.cookies.pop('foo')
-        assert b'Cookie foo=' not in bytes(m)
 
 
 class TestICAPMessage(object):
