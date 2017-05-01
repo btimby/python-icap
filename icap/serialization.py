@@ -90,11 +90,19 @@ class Serializer(object):
                                is_options=self.is_options)
 
         if self.response.status_line.code == 200 and not self.is_options:
-            # Fix up the Content-Length header...
+            # Content-Length header depends on the compression used. Since gzip
+            # has various levels of compression, even if we don't change the
+            # content, the body size can change (if our level does not match
+            # the origin server).
+            #
+            # TODO: I am not sure happy about the efficiency of this, but I am
+            # not sure how to get around it. We could possibly convert the
+            # response to chunked transfer encoding, and _remove_ the
+            # Content-Length header, but that is invasive.
             b = BytesIO()
-            content_length = self.write_body(b)
-            if content_length:
-                self.response.http.headers.replace('Content-Length', str(content_length))
+            cl = self.write_body(b)
+            if cl:
+                self.response.http.headers.replace('Content-Length', str(cl))
             b.seek(0)
 
         http_preamble = self.set_encapsulated_header()
@@ -113,7 +121,6 @@ class Serializer(object):
         stream.write(b'\r\n')
         stream.write(http_preamble)
 
-        #self.write_body(stream)
         shutil.copyfileobj(b, stream)
 
     @cached_property
