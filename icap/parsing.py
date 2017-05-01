@@ -282,6 +282,14 @@ class HTTPMessageParser(ChunkedMessageParser):
 
     @cached_property
     def is_gzipped(self):
+        # See notes below in on_complete(). I think that it is not possible to
+        # unzip 206 partial content replies to Range requests as the returned
+        # data will not include the gzip header. Range requests act upon the
+        # gzipped data, not the original file. Therefore, it may be desirable
+        # to inspect the HTTP status code and return False here for 206.
+        #
+        # https://forum.nginx.org/read.php?2,209738,210053#msg-210053
+        #
         return 'gzip' in self.headers.get('Content-Encoding', '')
 
     def on_complete(self):
@@ -292,7 +300,11 @@ class HTTPMessageParser(ChunkedMessageParser):
                 payload = gzip.decompress(payload)
             except OSError as e:
                 # When a server returns 206 partial content, sometimes the data
-                # is not valid gzip.
+                # is not valid gzip. I observed this with Google, they would
+                # reply to a Range request with 206 partial content,
+                # content-length: 1, content-encoding: gzip. Even though the
+                # one byte response is not valid gzip data. I would expect that
+                # the response would be larger (to account for the gzip header).
                 if 'Not a gzipped file' not in e.args[0]:
                     raise
         self.payload = payload
