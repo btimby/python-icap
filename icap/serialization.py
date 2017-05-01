@@ -92,8 +92,7 @@ class Serializer(object):
         if self.response.status_line.code == 200 and not self.is_options:
             # Fix up the Content-Length header...
             b = BytesIO()
-            self.write_body(b)
-            self.response.http.headers.replace('Content-Length', str(b.tell()))
+            self.response.http.headers.replace('Content-Length', str(self.write_body(b)))
             b.seek(0)
 
         http_preamble = self.set_encapsulated_header()
@@ -136,6 +135,7 @@ class Serializer(object):
         stream.write(header+b'\r\n')
         stream.write(body+b'\r\n')
         stream.write(b'0\r\n\r\n')
+        return len(body)
 
     def set_encapsulated_header(self):
         """Serialize the http message preamble, set the encapsulated header,
