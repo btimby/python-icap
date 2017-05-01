@@ -8,6 +8,7 @@ directly except for special circumstances.
 import gzip
 import logging
 import re
+import shutil
 
 from io import BytesIO
 from collections import OrderedDict
