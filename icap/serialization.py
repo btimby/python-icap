@@ -9,6 +9,7 @@ import gzip
 import logging
 import re
 
+from io import BytesIO
 from collections import OrderedDict
 
 from werkzeug import http_date, cached_property
@@ -99,11 +100,18 @@ class Serializer(object):
 
         # FIXME: need to serialize opt-body requests too.
 
+        # Fix up the Content-Length header...
+        b = BytesIO()
+        self.write_body(b)
+        self.response.headers.replace('Content-Length', b.tell())
+        b.seek(0)
+
         stream.write(bytes(self.response))
         stream.write(b'\r\n')
         stream.write(http_preamble)
 
-        self.write_body(stream)
+        #self.write_body(stream)
+        shutil.copyfileobj(b, stream)
 
     @cached_property
     def is_gzipped(self):
