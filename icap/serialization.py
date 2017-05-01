@@ -103,7 +103,7 @@ class Serializer(object):
         # Fix up the Content-Length header...
         b = BytesIO()
         self.write_body(b)
-        self.response.headers.replace('Content-Length', b.tell())
+        self.response.headers.replace('Content-Length', str(b.tell()))
         b.seek(0)
 
         stream.write(bytes(self.response))
