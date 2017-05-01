@@ -288,7 +288,13 @@ class HTTPMessageParser(ChunkedMessageParser):
         payload = b''.join(b.content for b in self.chunks)
         if self.is_gzipped:
             # FIXME: this should be done in a thread
-            payload = gzip.decompress(payload)
+            try:
+                payload = gzip.decompress(payload)
+            except OSError as e:
+                # When a server returns 206 partial content, sometimes the data
+                # is not valid gzip.
+                if 'Not a gzipped file' not in e.args[0]:
+                    raise
         self.payload = payload
 
     def attempt_parse_chunk(self):
