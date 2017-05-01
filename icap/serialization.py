@@ -92,7 +92,9 @@ class Serializer(object):
         if self.response.status_line.code == 200 and not self.is_options:
             # Fix up the Content-Length header...
             b = BytesIO()
-            self.response.http.headers.replace('Content-Length', str(self.write_body(b)))
+            content_length = self.write_body(b)
+            if content_length:
+                self.response.http.headers.replace('Content-Length', str(content_length))
             b.seek(0)
 
         http_preamble = self.set_encapsulated_header()
