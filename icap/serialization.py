@@ -89,6 +89,12 @@ class Serializer(object):
         remove_invalid_headers(self.response.headers,
                                is_options=self.is_options)
 
+        # Fix up the Content-Length header...
+        b = BytesIO()
+        self.write_body(b)
+        self.response.headers.replace('Content-Length', str(b.tell()))
+        b.seek(0)
+
         http_preamble = self.set_encapsulated_header()
 
         if self.response.status_line.code != 200 or self.is_options:
@@ -100,12 +106,6 @@ class Serializer(object):
             return
 
         # FIXME: need to serialize opt-body requests too.
-
-        # Fix up the Content-Length header...
-        b = BytesIO()
-        self.write_body(b)
-        self.response.headers.replace('Content-Length', str(b.tell()))
-        b.seek(0)
 
         stream.write(bytes(self.response))
         stream.write(b'\r\n')
